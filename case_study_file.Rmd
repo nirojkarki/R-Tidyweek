@@ -1,0 +1,175 @@
+---
+title: "case_study_file"
+author: "Binod Jung Bogati"
+date: "9/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+```
+
+
+```{r}
+province_1 <- read_excel("./data/dengue_np.xlsx", 
+                      sheet ="Province 1")
+
+province_2 <- read_excel("./data/dengue_np.xlsx",
+                         sheet ="Province 2" )
+province_3 <- read_excel("./data/dengue_np.xlsx",
+                         sheet = "Province 3")
+province_4 <- read_excel("./data/dengue_np.xlsx",
+                         sheet ="Province 4" )
+province_5 <- read_excel("./data/dengue_np.xlsx",
+                         sheet ="Province 5" )
+province_6 <- read_excel("./data/dengue_np.xlsx",
+                         sheet ="Province 6" )
+province_7 <- read_excel("./data/dengue_np.xlsx",
+                         sheet ="Province 7" )
+
+nepal_province <- bind_rows(province_1,province_2,province_3,province_4,province_5,province_6,province_7)
+head(nepal_province)
+
+
+```
+
+```{r}
+library(tidyverse)
+
+np_province <- nepal_province %>% 
+  pivot_longer(cols = 2:8 , 
+               names_to = "Year" , 
+               values_to = "Cases" )
+
+np_province
+
+```
+
+```{r}
+nepal_province %>% View()
+np_province %>% View()
+```
+
+```{r}
+library(purrr)
+path<- "./data/dengue_np.xlsx"
+
+province_df <- path %>% 
+    excel_sheets() %>% 
+    set_names() %>% 
+    map_df(read_excel,
+    path=path,
+    .id="Province")
+
+
+p_df<-province_df %>% 
+  pivot_longer(cols=3:9, names_to = "Year", values_to = "Cases")
+p_df
+    
+```
+
+## Find highest dengue cases in year 2070
+
+```{r}
+
+highest_cases_2070 <- p_df %>% 
+  filter(Year==2070, Cases!=0) %>% 
+  arrange(desc(Cases))
+highest_cases_2070
+
+
+```
+
+
+## Plot highest cases of 2070
+
+```{r}
+
+library(ggplot2)
+highest_cases_2070 %>% 
+  ggplot(aes(x= reorder(District, -Cases), y = Cases, fill=Province))+
+  geom_bar(stat="identity")+
+  labs(title = "Highest dengue case",
+       x = "Districts", 
+       y= "No. of cases")+
+  coord_flip()+
+  theme_minimal()
+
+```
+
+## Plot highest cases of 2070 by province
+
+```{r}
+highest_cases_2070 %>% 
+  ggplot(aes(x= reorder(Province, -Cases), y = Cases, fill=Province))+
+  geom_bar(stat="identity")+
+  labs(title = "Highest dengue case",
+       x = "Districts", 
+       y= "No. of cases")+
+  coord_flip()+
+  theme_minimal()
+
+```
+
+```{r}
+highest_cases_2070 %>% 
+  group_by(Province) %>% 
+  summarise(dengue_cases=sum(Cases)) %>% 
+  ggplot(aes(x= reorder(Province, -dengue_cases), y = dengue_cases, fill=Province))+
+  geom_bar(stat="identity")+
+  labs(title = "Highest dengue case",
+       x = "Districts", 
+       y= "No. of cases")+
+  coord_flip()+
+  theme_minimal()
+
+```
+
+
+```{r}
+
+
+```
+
+## Convert np_province to wider format
+
+```{r}
+dengue_table<-pivot_wider(p_df, names_from = "Year",
+            values_from = "Cases") %>% 
+  unnest()
+dengue_table
+```
+
+
+```{r}
+
+p_name <- names(dengue_table)[3:9]
+
+province_table<-dengue_table %>% 
+  group_by(Province) %>% 
+  summarise_at(p_name,sum)
+province_table
+
+```
+
+
+
+
+
+
+
+

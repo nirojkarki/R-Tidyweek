@@ -1,0 +1,107 @@
+---
+title: "Dengue Report"
+output:
+  html_document:
+    highlight: tango
+    theme: united
+    toc: yes
+    toc_float:
+      collapsed: yes
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r echo=FALSE}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+```
+
+```{r echo=FALSE}
+library(purrr)
+path<- "./data/dengue_np.xlsx"
+
+province_df <- path %>% 
+    excel_sheets() %>% 
+    set_names() %>% 
+    map_df(read_excel,
+    path=path,
+    .id="Province")
+
+
+p_df<-province_df %>% 
+  pivot_longer(cols=3:9, names_to = "Year", values_to = "Cases")
+p_df
+```
+
+
+
+## Find highest dengue cases in year 2070
+
+```{r echo=FALSE}
+
+highest_cases_2070 <- p_df %>% 
+  filter(Year==2070, Cases!=0) %>% 
+  arrange(desc(Cases))
+highest_cases_2070
+
+
+```
+
+## Plot highest cases of 2070
+
+```{r echo=FALSE}
+
+library(ggplot2)
+highest_cases_2070 %>% 
+  ggplot(aes(x= reorder(District, -Cases), y = Cases, fill=Province))+
+  geom_bar(stat="identity")+
+  labs(title = "Highest dengue case",
+       x = "Districts", 
+       y= "No. of cases")+
+  coord_flip()+
+  theme_minimal()
+
+```
+
+## Plot highest cases of 2070 by province
+
+```{r echo=FALSE}
+highest_cases_2070 %>% 
+  ggplot(aes(x= reorder(Province, -Cases), y = Cases, fill=Province))+
+  geom_bar(stat="identity")+
+  labs(title = "Highest dengue case",
+       x = "Districts", 
+       y= "No. of cases")+
+  coord_flip()+
+  theme_minimal()
+
+```
+
+```{r echo=FALSE}
+highest_cases_2070 %>% 
+  group_by(Province) %>% 
+  summarise(dengue_cases=sum(Cases)) %>% 
+  ggplot(aes(x= reorder(Province, -dengue_cases), y = dengue_cases, fill=Province))+
+  geom_bar(stat="identity")+
+  labs(title = "Highest dengue case",
+       x = "Districts", 
+       y= "No. of cases")+
+  coord_flip()+
+  theme_minimal()
+
+```
+
